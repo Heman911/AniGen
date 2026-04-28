@@ -2,7 +2,7 @@ import pandas as pd
 
 # Load datasets
 df1 = pd.read_csv("data/anime_cleaned.csv")
-df2 = pd.read_csv("data/anime_with_synopsis.csv")  # <-- your second file name
+df2 = pd.read_csv("data/anime_with_synopsis.csv")  # second file name
 
 # Normalize column names
 df1.columns = df1.columns.str.lower()

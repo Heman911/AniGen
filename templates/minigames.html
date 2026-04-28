@@ -42,7 +42,7 @@
 
 <body>
 
-<h1>🎮 Jigsaw Puzzle</h1>
+<h1>Jigsaw Puzzle</h1>
 
 <h3 id="imageName">Click Start</h3>
 
@@ -86,9 +86,9 @@ function startGame() {
 
     img = new Image();
 
-    // 🔥 DEBUG: catch errors
+    // DEBUG: catch errors
     img.onerror = () => {
-        alert("❌ Image failed to load: " + selectedImage.src);
+        alert("Image failed to load: " + selectedImage.src);
     };
 
     img.onload = () => {

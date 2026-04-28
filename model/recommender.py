@@ -6,9 +6,7 @@ from rapidfuzz import process, fuzz
 import json
 import os
 
-# =========================
 # CACHE SETUP
-# =========================
 CACHE_FILE = "image_cache.json"
 
 if os.path.exists(CACHE_FILE):
@@ -17,18 +15,21 @@ if os.path.exists(CACHE_FILE):
 else:
     image_cache = {}
 
-# =========================
 # LOAD DATA
-# =========================
-df = pd.read_csv("data/anime_cleaned.csv")
+df = None
+
+def get_data():
+    global df
+    if df is None:
+        import pandas as pd
+        df = pd.read_csv("data/anime_cleaned.csv")
+    return df
 df.columns = df.columns.str.lower()
 
 df['title'] = df['title'].fillna("").astype(str).str.lower()
 df['genre'] = df['genre'].fillna('')
 
-# =========================
 # GENRE PROCESSING
-# =========================
 df['genre_list'] = df['genre'].apply(lambda x: x.split(', '))
 
 mlb = MultiLabelBinarizer()
@@ -36,9 +37,7 @@ genre_matrix = mlb.fit_transform(df['genre_list'])
 
 similarity = cosine_similarity(genre_matrix)
 
-# =========================
 # FUZZY MATCH
-# =========================
 def find_closest_title(anime_name):
     titles = df['title'].tolist()
 
@@ -53,15 +52,11 @@ def find_closest_title(anime_name):
 
     return None
 
-# =========================
 # GET ANIME DATA (API)
-# =========================
 def get_anime_data(title):
     global image_cache
 
-    # =========================
     # CACHE CHECK
-    # =========================
     if title in image_cache:
         cached = image_cache[title]
 
@@ -82,9 +77,7 @@ def get_anime_data(title):
             "rank": cached.get("rank", "N/A")
         }
 
-    # =========================
     # API FETCH
-    # =========================
     try:
         url = f"https://api.jikan.moe/v4/anime?q={title}&limit=1"
         res = requests.get(url, timeout=5)
@@ -104,9 +97,7 @@ def get_anime_data(title):
                 "rank": anime.get("rank", "N/A")
             }
 
-            # =========================
             # SAVE TO CACHE
-            # =========================
             image_cache[title] = result
 
             with open(CACHE_FILE, "w") as f:
@@ -117,18 +108,15 @@ def get_anime_data(title):
     except Exception as e:
         print(f"[ERROR] Failed for {title}: {e}")
 
-    # =========================
     # FALLBACK
-    # =========================
     return {
         "image": "/static/default.png",
         "score": "N/A",
         "members": "N/A",
         "rank": "N/A"
     }
-# =========================
+
 # RECOMMENDER FUNCTION
-# =========================
 def recommend_by_anime(anime_name, top_n=5):
     anime_name = anime_name.lower()
 
@@ -168,8 +156,6 @@ def recommend_by_anime(anime_name, top_n=5):
 
     return results
 
-# =========================
-# 🧪 TEST
-# =========================
+# TEST
 if __name__ == "__main__":
     print(recommend_by_anime("naruto"))

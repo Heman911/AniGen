@@ -113,7 +113,7 @@
 
 <body>
 
-<!-- 🎬 VIDEO BACKGROUND -->
+<!-- VIDEO BACKGROUND -->
 <video autoplay muted loop id="bg-video">
     <source src="{{ url_for('static', filename='forBG.mp4') }}" type="video/mp4">
 </video>
@@ -134,7 +134,7 @@
         <div class="results">
             <h2>Predicted Genres:</h2>
             {% for genre, score in results %}
-                <div>🎯 {{ genre }} — {{ score }}</div>
+                <div>{{ genre }} — {{ score }}</div>
             {% endfor %}
         </div>
     {% endif %}

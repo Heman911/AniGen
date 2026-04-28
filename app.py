@@ -6,15 +6,13 @@ from rapidfuzz import process, fuzz
 
 app = Flask(__name__)
 
-# =========================
-# 📊 LOAD DATA
-# =========================
+# LOAD DATA
 df = pd.read_csv("data/anime_full.csv")
 df.columns = df.columns.str.lower()
 
 df['title'] = df['title'].fillna("").astype(str).str.lower()
 
-# ✅ FIX GENRE COLUMN
+# FIX GENRE COLUMN
 if 'genre_x' in df.columns:
     df['genre'] = df['genre_x']
 elif 'genre_y' in df.columns:
@@ -22,16 +20,12 @@ elif 'genre_y' in df.columns:
 else:
     df['genre'] = ""
 
-# =========================
-# 🏠 HOME PAGE
-# =========================
+# HOME PAGE
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# =========================
-# 🔍 AUTOCOMPLETE SEARCH
-# =========================
+# AUTOCOMPLETE SEARCH
 @app.route('/search')
 def search():
     query = request.args.get('q', '').lower().strip()
@@ -58,9 +52,7 @@ def search():
 
     return jsonify(results)
 
-# =========================
-# 🎯 RECOMMEND BY ANIME
-# =========================
+# RECOMMEND BY ANIME
 @app.route('/recommend', methods=['POST'])
 def recommend():
     anime_name = request.form.get('anime_name')
@@ -71,9 +63,7 @@ def recommend():
     results = recommend_by_anime(anime_name)
     return render_template('recommend.html', results=results)
 
-# =========================
-# 🎯 RECOMMEND BY GENRE
-# =========================
+# RECOMMEND BY GENRE
 @app.route('/recommend_by_genre', methods=['POST'])
 def recommend_by_genre():
     genre = request.form.get('genre', '').lower()
@@ -101,9 +91,7 @@ def recommend_by_genre():
 
     return render_template('recommend.html', results=results)
 
-# =========================
-# 🧠 CLASSIFIER
-# =========================
+# CLASSIFIER
 @app.route('/classify', methods=['GET', 'POST'])
 def classify():
     if request.method == 'POST':
@@ -117,16 +105,12 @@ def classify():
 
     return render_template('classify.html', results=[])
 
-# =========================
-# 🎮 MINIGAMES (NEW)
-# =========================
+# MINIGAMES
 @app.route('/minigames')
 def minigames():
     return render_template('minigames.html')
 
-# =========================
-# ⚙️ DEBUG PANEL
-# =========================
+# DEBUG PANEL
 @app.route('/debug')
 def debug():
     sample = df.head(10).to_dict(orient='records')
@@ -137,8 +121,6 @@ def debug():
         "sample_data": sample
     }
 
-# =========================
-# 🚀 RUN
-# =========================
+# RUN
 if __name__ == "__main__":
     app.run(debug=True)

@@ -13,7 +13,7 @@
             overflow: hidden;
         }
 
-        /* 🎬 VIDEO BACKGROUND */
+        /* VIDEO BACKGROUND */
         #bg-video {
             position: fixed;
             right: 0;
@@ -24,7 +24,7 @@
             z-index: -1;
         }
 
-        /* 🌑 OVERLAY */
+        /* OVERLAY */
         .overlay {
             background: linear-gradient(
                 rgba(0, 0, 0, 0.6),
@@ -55,7 +55,7 @@
             opacity: 0.9;
         }
 
-        /* 🔍 SEARCH UI */
+        /* SEARCH UI */
         .search-container {
             display: flex;
             flex-direction: column;
@@ -123,7 +123,7 @@
             background: #ff4757;
         }
 
-        /* 🔥 SIDEBAR */
+        /* SIDEBAR */
         #menuBtn {
             position: fixed;
             top: 20px;
@@ -168,15 +168,15 @@
 <!-- ☰ MENU BUTTON -->
 <div id="menuBtn">☰</div>
 
-<!-- 🎮 SIDEBAR -->
+<!-- SIDEBAR -->
 <div id="sidebar">
     <h2>Menu</h2>
-    <a href="/minigames">🎮 Minigames</a>
-    <a href="/classify">🎭 Classifier</a>
+    <a href="/minigames">Minigames</a>
+    <a href="/classify">Classifier</a>
     <a href="/debug" target="_blank">⚙️ Debug</a>
 </div>
 
-<!-- 🎬 VIDEO -->
+<!-- VIDEO -->
 <video autoplay muted loop id="bg-video">
     <source src="{{ url_for('static', filename='forBG.mp4') }}" type="video/mp4">
 </video>

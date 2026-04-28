@@ -4,16 +4,11 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
 
-# =========================
 # LOAD DATA
-# =========================
 df = pd.read_csv("data/anime_full.csv")
 df.columns = df.columns.str.lower()
 
-# =========================
-# 🧹 CLEAN DATA
-# =========================
-
+# CLEAN DATA
 # Fix synopsis
 df['synopsis'] = df['synopsis'].fillna("")
 
@@ -31,9 +26,7 @@ df['genre'] = df['genre'].apply(
     lambda x: [g.strip() for g in str(x).split(',') if g.strip()]
 )
 
-# =========================
 # TF-IDF
-# =========================
 tfidf = TfidfVectorizer(
     max_features=5000,
     stop_words='english'
@@ -41,21 +34,15 @@ tfidf = TfidfVectorizer(
 
 X = tfidf.fit_transform(df['synopsis'])
 
-# =========================
 # MULTI-LABEL ENCODING
-# =========================
 mlb = MultiLabelBinarizer()
 y = mlb.fit_transform(df['genre'])
 
-# =========================
 # TRAIN MODEL
-# =========================
 model = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model.fit(X, y)
 
-# =========================
 # PREDICTION FUNCTION
-# =========================
 def predict_genres(text):
     if not text or not text.strip():
         return []
