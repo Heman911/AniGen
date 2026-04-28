@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 from model.recommender import recommend_by_anime, get_anime_data
-#from model.classifier import predict_genres
 from rapidfuzz import process, fuzz
 import os
 import pandas as pd
@@ -28,10 +27,6 @@ def get_data():
             df['genre'] = ""
 
     return df
-
-@app.route('/classify', methods=['GET', 'POST'])
-def classify():
-    return render_template('classify.html', results=[])
 
 # HOME PAGE
 @app.route('/')
@@ -108,18 +103,9 @@ def recommend_by_genre():
 
     return render_template('recommend.html', results=results)
 
-# CLASSIFIER
+# CLASSIFIER (DISABLED SAFE VERSION)
 @app.route('/classify', methods=['GET', 'POST'])
 def classify():
-    if request.method == 'POST':
-        text = request.form.get('description')
-
-        if not text or not text.strip():
-            return render_template('classify.html', results=[])
-
-        results = predict_genres(text)
-        return render_template('classify.html', results=results)
-
     return render_template('classify.html', results=[])
 
 # MINIGAMES
