@@ -33,7 +33,7 @@ def get_model():
             lambda x: [g.strip() for g in str(x).split(',') if g.strip()]
         )
 
-        # 🔥 MEMORY SAFE TFIDF
+        # MEMORY SAFE TFIDF
         tfidf = TfidfVectorizer(
             max_features=2000,   # reduced from 3000
             stop_words='english'
@@ -44,7 +44,7 @@ def get_model():
         mlb = MultiLabelBinarizer()
         y = mlb.fit_transform(df['genre'])
 
-        # 🔥 LIGHTER MODEL
+        # LIGHTER MODEL
         model = OneVsRestClassifier(
             LogisticRegression(max_iter=300)
         )
@@ -55,20 +55,22 @@ def get_model():
 
 
 def predict_genres(text):
-    if not text or not text.strip():
-        return []
+    text = text.lower()
 
-    tfidf, mlb, model = get_model()
-
-    vec = tfidf.transform([text])
-    probs = model.predict_proba(vec)
+    genres = {
+        "action": ["fight", "battle", "war", "power"],
+        "romance": ["love", "relationship", "couple"],
+        "comedy": ["funny", "humor", "laugh"],
+        "fantasy": ["magic", "kingdom", "dragon"],
+        "sci-fi": ["space", "future", "technology"]
+    }
 
     results = []
 
-    for i, genre in enumerate(mlb.classes_):
-        score = probs[0][i]
+    for genre, keywords in genres.items():
+        score = sum(1 for word in keywords if word in text)
 
-        if score > 0.25:
-            results.append((genre, round(score, 2)))
+        if score > 0:
+            results.append((genre, score))
 
     return sorted(results, key=lambda x: x[1], reverse=True)[:5]
