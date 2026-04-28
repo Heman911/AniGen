@@ -3,11 +3,20 @@ from model.recommender import recommend_by_anime, get_anime_data
 from model.classifier import predict_genres
 import pandas as pd
 from rapidfuzz import process, fuzz
+import os
 
 app = Flask(__name__)
 
 # LOAD DATA
-df = pd.read_csv("data/anime_full.csv")
+df = None
+
+def get_data():
+    global df
+    if df is None:
+        import pandas as pd
+        df = pd.read_csv("data/anime_cleaned.csv")
+    return df
+
 df.columns = df.columns.str.lower()
 
 df['title'] = df['title'].fillna("").astype(str).str.lower()
@@ -123,4 +132,5 @@ def debug():
 
 # RUN
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

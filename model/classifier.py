@@ -5,7 +5,15 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
 
 # LOAD DATA
-df = pd.read_csv("data/anime_full.csv")
+df = None
+
+def get_data():
+    global df
+    if df is None:
+        import pandas as pd
+        df = pd.read_csv("data/anime_cleaned.csv")
+    return df
+
 df.columns = df.columns.str.lower()
 
 # CLEAN DATA
