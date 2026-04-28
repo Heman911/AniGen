@@ -4,56 +4,62 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
 
-# LOAD DATA
+# GLOBALS (lazy loaded)
 df = None
+tfidf = None
+mlb = None
+model = None
 
-def get_data():
-    global df
-    if df is None:
-        import pandas as pd
+def get_model():
+    global df, tfidf, mlb, model
+
+    if model is None:
         df = pd.read_csv("data/anime_cleaned.csv")
-    return df
 
-df.columns = df.columns.str.lower()
+        # CLEAN DATA
+        df.columns = df.columns.str.lower()
+        df['synopsis'] = df['synopsis'].fillna("")
 
-# CLEAN DATA
-# Fix synopsis
-df['synopsis'] = df['synopsis'].fillna("")
+        # FIX GENRE COLUMN
+        if 'genre_x' in df.columns:
+            df['genre'] = df['genre_x']
+        elif 'genre_y' in df.columns:
+            df['genre'] = df['genre_y']
+        else:
+            raise Exception("No genre column found")
 
-# FIX MERGED GENRE COLUMNS
-if 'genre_x' in df.columns:
-    df['genre'] = df['genre_x']
-elif 'genre_y' in df.columns:
-    df['genre'] = df['genre_y']
-else:
-    raise Exception("❌ No genre column found (genre_x / genre_y missing)")
+        df['genre'] = df['genre'].fillna("")
+        df['genre'] = df['genre'].apply(
+            lambda x: [g.strip() for g in str(x).split(',') if g.strip()]
+        )
 
-# Clean genres
-df['genre'] = df['genre'].fillna("")
-df['genre'] = df['genre'].apply(
-    lambda x: [g.strip() for g in str(x).split(',') if g.strip()]
-)
+        # TF-IDF
+        tfidf = TfidfVectorizer(
+            max_features=3000,   # reduced for memory
+            stop_words='english'
+        )
 
-# TF-IDF
-tfidf = TfidfVectorizer(
-    max_features=5000,
-    stop_words='english'
-)
+        X = tfidf.fit_transform(df['synopsis'])
 
-X = tfidf.fit_transform(df['synopsis'])
+        # LABELS
+        mlb = MultiLabelBinarizer()
+        y = mlb.fit_transform(df['genre'])
 
-# MULTI-LABEL ENCODING
-mlb = MultiLabelBinarizer()
-y = mlb.fit_transform(df['genre'])
+        # MODEL
+        model = OneVsRestClassifier(
+            LogisticRegression(max_iter=500)  # lighter
+        )
+        model.fit(X, y)
 
-# TRAIN MODEL
-model = OneVsRestClassifier(LogisticRegression(max_iter=1000))
-model.fit(X, y)
+    return tfidf, mlb, model
+
 
 # PREDICTION FUNCTION
 def predict_genres(text):
     if not text or not text.strip():
         return []
+
+    tfidf, mlb, model = get_model()
 
     vec = tfidf.transform([text])
     probs = model.predict_proba(vec)
