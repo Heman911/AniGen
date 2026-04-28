@@ -15,30 +15,32 @@ if os.path.exists(CACHE_FILE):
 else:
     image_cache = {}
 
-# LOAD DATA
+# GLOBALS (lazy loaded)
 df = None
+similarity = None
 
 def get_data():
-    global df
+    global df, similarity
+
     if df is None:
-        import pandas as pd
         df = pd.read_csv("data/anime_cleaned.csv")
-    return df
-df.columns = df.columns.str.lower()
 
-df['title'] = df['title'].fillna("").astype(str).str.lower()
-df['genre'] = df['genre'].fillna('')
+        # CLEANING
+        df['title'] = df['title'].fillna("").astype(str).str.lower()
+        df['genre'] = df['genre'].fillna('')
+        df['genre_list'] = df['genre'].apply(lambda x: x.split(', '))
 
-# GENRE PROCESSING
-df['genre_list'] = df['genre'].apply(lambda x: x.split(', '))
+        # FEATURE BUILDING
+        mlb = MultiLabelBinarizer()
+        genre_matrix = mlb.fit_transform(df['genre_list'])
 
-mlb = MultiLabelBinarizer()
-genre_matrix = mlb.fit_transform(df['genre_list'])
+        similarity = cosine_similarity(genre_matrix)
 
-similarity = cosine_similarity(genre_matrix)
+    return df, similarity
 
 # FUZZY MATCH
 def find_closest_title(anime_name):
+    df, _ = get_data()
     titles = df['title'].tolist()
 
     match = process.extractOne(
@@ -56,11 +58,9 @@ def find_closest_title(anime_name):
 def get_anime_data(title):
     global image_cache
 
-    # CACHE CHECK
     if title in image_cache:
         cached = image_cache[title]
 
-        # FIX OLD CACHE FORMAT (string → dict)
         if isinstance(cached, str):
             return {
                 "image": cached,
@@ -69,7 +69,6 @@ def get_anime_data(title):
                 "rank": "N/A"
             }
 
-        # ensure all keys exist
         return {
             "image": cached.get("image", "/static/default.png"),
             "score": cached.get("score", "N/A"),
@@ -77,7 +76,6 @@ def get_anime_data(title):
             "rank": cached.get("rank", "N/A")
         }
 
-    # API FETCH
     try:
         url = f"https://api.jikan.moe/v4/anime?q={title}&limit=1"
         res = requests.get(url, timeout=5)
@@ -97,7 +95,6 @@ def get_anime_data(title):
                 "rank": anime.get("rank", "N/A")
             }
 
-            # SAVE TO CACHE
             image_cache[title] = result
 
             with open(CACHE_FILE, "w") as f:
@@ -108,7 +105,6 @@ def get_anime_data(title):
     except Exception as e:
         print(f"[ERROR] Failed for {title}: {e}")
 
-    # FALLBACK
     return {
         "image": "/static/default.png",
         "score": "N/A",
@@ -118,8 +114,9 @@ def get_anime_data(title):
 
 # RECOMMENDER FUNCTION
 def recommend_by_anime(anime_name, top_n=5):
-    anime_name = anime_name.lower()
+    df, similarity = get_data()
 
+    anime_name = anime_name.lower()
     matched_title = find_closest_title(anime_name)
 
     if not matched_title:
@@ -137,15 +134,14 @@ def recommend_by_anime(anime_name, top_n=5):
         title = row['title']
 
         if title != matched_title:
-            # GET FULL DATA
             data = get_anime_data(title)
 
             results.append({
                 "title": title.title(),
-                "image": data["image"],      #  poster
-                "score": data["score"],      #  rating
-                "members": data["members"],  #  popularity
-                "rank": data["rank"],        #  rank
+                "image": data["image"],
+                "score": data["score"],
+                "members": data["members"],
+                "rank": data["rank"],
                 "genres": row['genre'],
                 "type": row.get('type', 'N/A'),
                 "episodes": row.get('episodes', 'N/A')

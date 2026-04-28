@@ -1,33 +1,33 @@
 from flask import Flask, render_template, request, jsonify
 from model.recommender import recommend_by_anime, get_anime_data
 from model.classifier import predict_genres
-import pandas as pd
 from rapidfuzz import process, fuzz
 import os
+import pandas as pd
 
 app = Flask(__name__)
 
-# LOAD DATA
+# LAZY LOAD DATA
 df = None
 
 def get_data():
     global df
     if df is None:
-        import pandas as pd
         df = pd.read_csv("data/anime_cleaned.csv")
+
+        # CLEANING
+        df.columns = df.columns.str.lower()
+        df['title'] = df['title'].fillna("").astype(str).str.lower()
+
+        # FIX GENRE COLUMN
+        if 'genre_x' in df.columns:
+            df['genre'] = df['genre_x']
+        elif 'genre_y' in df.columns:
+            df['genre'] = df['genre_y']
+        else:
+            df['genre'] = ""
+
     return df
-
-df.columns = df.columns.str.lower()
-
-df['title'] = df['title'].fillna("").astype(str).str.lower()
-
-# FIX GENRE COLUMN
-if 'genre_x' in df.columns:
-    df['genre'] = df['genre_x']
-elif 'genre_y' in df.columns:
-    df['genre'] = df['genre_y']
-else:
-    df['genre'] = ""
 
 # HOME PAGE
 @app.route('/')
@@ -37,6 +37,8 @@ def home():
 # AUTOCOMPLETE SEARCH
 @app.route('/search')
 def search():
+    df = get_data()
+
     query = request.args.get('q', '').lower().strip()
 
     if not query:
@@ -75,6 +77,8 @@ def recommend():
 # RECOMMEND BY GENRE
 @app.route('/recommend_by_genre', methods=['POST'])
 def recommend_by_genre():
+    df = get_data()
+
     genre = request.form.get('genre', '').lower()
 
     if not genre:
@@ -122,6 +126,7 @@ def minigames():
 # DEBUG PANEL
 @app.route('/debug')
 def debug():
+    df = get_data()
     sample = df.head(10).to_dict(orient='records')
 
     return {
@@ -130,7 +135,7 @@ def debug():
         "sample_data": sample
     }
 
-# RUN
+# RUN (only for local)
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
