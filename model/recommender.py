@@ -26,9 +26,24 @@ def get_data():
         df = pd.read_csv("data/anime_cleaned.csv")
 
         # CLEANING
+        df.columns = df.columns.str.lower()
         df['title'] = df['title'].fillna("").astype(str).str.lower()
-        df['genre'] = df['genre'].fillna('')
-        df['genre_list'] = df['genre'].apply(lambda x: x.split(', '))
+
+        # FIX GENRE COLUMN (SAFE)
+        if 'genre' not in df.columns:
+            if 'genre_x' in df.columns:
+                df['genre'] = df['genre_x']
+            elif 'genre_y' in df.columns:
+                df['genre'] = df['genre_y']
+            else:
+                df['genre'] = ""
+        else:
+            df['genre'] = df['genre'].fillna("")
+
+        # PROCESS GENRES
+        df['genre_list'] = df['genre'].apply(
+            lambda x: [g.strip() for g in str(x).split(',') if g.strip()]
+        )
 
         # FEATURE BUILDING
         mlb = MultiLabelBinarizer()
@@ -142,7 +157,7 @@ def recommend_by_anime(anime_name, top_n=5):
                 "score": data["score"],
                 "members": data["members"],
                 "rank": data["rank"],
-                "genres": row['genre'],
+                "genres": row.get('genre', 'N/A'),
                 "type": row.get('type', 'N/A'),
                 "episodes": row.get('episodes', 'N/A')
             })

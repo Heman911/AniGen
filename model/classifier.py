@@ -18,24 +18,27 @@ def get_model():
 
         # CLEAN DATA
         df.columns = df.columns.str.lower()
-        df['synopsis'] = df['synopsis'].fillna("")
+        df['synopsis'] = df.get('synopsis', "").fillna("")
 
-        # FIX GENRE COLUMN
-        if 'genre_x' in df.columns:
-            df['genre'] = df['genre_x']
-        elif 'genre_y' in df.columns:
-            df['genre'] = df['genre_y']
+        # FIX GENRE COLUMN (SAFE)
+        if 'genre' not in df.columns:
+            if 'genre_x' in df.columns:
+                df['genre'] = df['genre_x']
+            elif 'genre_y' in df.columns:
+                df['genre'] = df['genre_y']
+            else:
+                df['genre'] = ""
         else:
-            raise Exception("No genre column found")
+            df['genre'] = df['genre'].fillna("")
 
-        df['genre'] = df['genre'].fillna("")
+        # CLEAN GENRES
         df['genre'] = df['genre'].apply(
             lambda x: [g.strip() for g in str(x).split(',') if g.strip()]
         )
 
-        # TF-IDF
+        # TF-IDF (lighter)
         tfidf = TfidfVectorizer(
-            max_features=3000,   # reduced for memory
+            max_features=2000,   # reduced further for safety
             stop_words='english'
         )
 
@@ -45,9 +48,9 @@ def get_model():
         mlb = MultiLabelBinarizer()
         y = mlb.fit_transform(df['genre'])
 
-        # MODEL
+        # MODEL (lighter)
         model = OneVsRestClassifier(
-            LogisticRegression(max_iter=500)  # lighter
+            LogisticRegression(max_iter=300)
         )
         model.fit(X, y)
 

@@ -18,13 +18,16 @@ def get_data():
         df.columns = df.columns.str.lower()
         df['title'] = df['title'].fillna("").astype(str).str.lower()
 
-        # FIX GENRE COLUMN
-        if 'genre_x' in df.columns:
-            df['genre'] = df['genre_x']
-        elif 'genre_y' in df.columns:
-            df['genre'] = df['genre_y']
+        # FIX GENRE COLUMN (SAFE)
+        if 'genre' not in df.columns:
+            if 'genre_x' in df.columns:
+                df['genre'] = df['genre_x']
+            elif 'genre_y' in df.columns:
+                df['genre'] = df['genre_y']
+            else:
+                df['genre'] = ""
         else:
-            df['genre'] = ""
+            df['genre'] = df['genre'].fillna("")
 
     return df
 
