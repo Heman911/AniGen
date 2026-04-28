@@ -54,23 +54,39 @@ def get_model():
     return tfidf, mlb, model
 
 
+# Lightweight keyword-based classifier (Railway safe)
+
 def predict_genres(text):
+    if not text or not text.strip():
+        return []
+
     text = text.lower()
 
-    genres = {
-        "action": ["fight", "battle", "war", "power"],
-        "romance": ["love", "relationship", "couple"],
-        "comedy": ["funny", "humor", "laugh"],
-        "fantasy": ["magic", "kingdom", "dragon"],
-        "sci-fi": ["space", "future", "technology"]
+    genre_keywords = {
+        "action": ["fight", "battle", "war", "power", "weapon", "attack", "soldier"],
+        "romance": ["love", "romance", "relationship", "couple", "crush", "kiss"],
+        "comedy": ["funny", "humor", "laugh", "joke", "hilarious"],
+        "fantasy": ["magic", "kingdom", "dragon", "demon", "fantasy", "spell"],
+        "sci-fi": ["space", "future", "technology", "robot", "alien", "cyber"],
+        "horror": ["ghost", "death", "kill", "blood", "horror", "dark"],
+        "adventure": ["journey", "quest", "explore", "travel", "treasure"],
+        "drama": ["life", "struggle", "emotion", "family", "past"],
+        "slice of life": ["school", "daily", "life", "friends", "routine"],
+        "sports": ["team", "match", "tournament", "goal", "competition"]
     }
 
     results = []
 
-    for genre, keywords in genres.items():
-        score = sum(1 for word in keywords if word in text)
+    for genre, keywords in genre_keywords.items():
+        score = 0
+
+        for word in keywords:
+            if word in text:
+                score += 1
 
         if score > 0:
-            results.append((genre, score))
+            # convert to "confidence" (fake ML feel)
+            confidence = round(min(0.95, 0.3 + score * 0.15), 2)
+            results.append((genre, confidence))
 
     return sorted(results, key=lambda x: x[1], reverse=True)[:5]

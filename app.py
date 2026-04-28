@@ -116,16 +116,10 @@ def classify():
         if not text or not text.strip():
             return render_template('classify.html', results=[])
 
-        try:
-            results = predict_genres(text)
-        except Exception as e:
-            print("Classifier error:", e)
-            results = []
-
+        results = predict_genres(text)
         return render_template('classify.html', results=results)
 
     return render_template('classify.html', results=[])
-
 # MINIGAMES
 @app.route('/minigames')
 def minigames():
