@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Minigames</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: black;
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        canvas {
+            margin-top: 20px;
+            border: 2px solid white;
+        }
+
+        button, select {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #ff4757;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        a {
+            display: block;
+            margin-top: 20px;
+            color: #ff4757;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🎮 Jigsaw Puzzle</h1>
+
+<h3 id="imageName">Click Start</h3>
+
+<select onchange="setDifficulty(this.value)">
+    <option value="3">Easy (3x3)</option>
+    <option value="4">Medium (4x4)</option>
+    <option value="5">Hard (5x5)</option>
+</select>
+
+<br>
+
+<canvas id="canvas" width="300" height="300"></canvas>
+
+<br>
+<button onclick="startGame()">Start Game</button>
+
+<a href="/">⬅ Back</a>
+
+<script>
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+
+let images = [
+    {src: "/static/posters/naruto.png", name: "Naruto"},
+    {src: "/static/posters/onepiece.png", name: "One Piece"},
+    {src: "/static/posters/deathnote.png", name: "Death Note"}
+];
+
+let img = new Image();
+let size = 3;
+let pieces = [];
+let selected = null;
+
+// START GAME
+function startGame() {
+    let randomIndex = Math.floor(Math.random() * images.length);
+    let selectedImage = images[randomIndex];
+
+    document.getElementById("imageName").innerText =
+        "Puzzle: " + selectedImage.name;
+
+    img = new Image();
+
+    // 🔥 DEBUG: catch errors
+    img.onerror = () => {
+        alert("❌ Image failed to load: " + selectedImage.src);
+    };
+
+    img.onload = () => {
+        createPuzzle();
+        shuffle();
+        draw();
+    };
+
+    img.src = selectedImage.src;
+}
+
+// CREATE PIECES
+function createPuzzle() {
+    pieces = [];
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            pieces.push({
+                x: x,
+                y: y,
+                correctX: x,
+                correctY: y
+            });
+        }
+    }
+}
+
+// SHUFFLE
+function shuffle() {
+    pieces.sort(() => Math.random() - 0.5);
+}
+
+// DRAW
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let pieceSize = canvas.width / size;
+
+    pieces.forEach((p, i) => {
+        let sx = p.correctX * pieceSize;
+        let sy = p.correctY * pieceSize;
+
+        let dx = (i % size) * pieceSize;
+        let dy = Math.floor(i / size) * pieceSize;
+
+        ctx.drawImage(img, sx, sy, pieceSize, pieceSize, dx, dy, pieceSize, pieceSize);
+    });
+}
+
+// CLICK SWAP
+canvas.addEventListener("click", (e) => {
+    let rect = canvas.getBoundingClientRect();
+
+    let x = Math.floor((e.clientX - rect.left) / (canvas.width / size));
+    let y = Math.floor((e.clientY - rect.top) / (canvas.height / size));
+
+    let index = y * size + x;
+
+    if (selected === null) {
+        selected = index;
+    } else {
+        [pieces[selected], pieces[index]] = [pieces[index], pieces[selected]];
+        selected = null;
+        draw();
+    }
+});
+
+// DIFFICULTY
+function setDifficulty(val) {
+    size = parseInt(val);
+}
+</script>
+
+</body>
+</html>

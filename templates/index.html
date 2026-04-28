@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AniGen</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            color: white;
+            text-align: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 🎬 VIDEO BACKGROUND */
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        /* 🌑 OVERLAY */
+        .overlay {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.6),
+                rgba(0, 0, 0, 0.85)
+            );
+            height: 100vh;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        /* 🔍 SEARCH UI */
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            padding: 12px;
+            width: 300px;
+            border-radius: 8px;
+            border: none;
+            outline: none;
+
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+
+        input::placeholder {
+            color: #ccc;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+
+            box-shadow: 0 0 15px #ff4757;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff6b81;
+            transform: scale(1.05);
+        }
+
+        /* Suggestions dropdown */
+        #suggestions {
+            list-style: none;
+            padding: 0;
+            margin-top: 5px;
+            width: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #suggestions li {
+            background: rgba(0,0,0,0.8);
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+
+        #suggestions li:hover {
+            background: #ff4757;
+        }
+
+        /* 🔥 SIDEBAR */
+        #menuBtn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        #sidebar {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            width: 250px;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            padding: 20px;
+            transition: 0.3s;
+            z-index: 999;
+        }
+
+        #sidebar h2 {
+            margin-top: 0;
+        }
+
+        #sidebar a {
+            display: block;
+            margin: 15px 0;
+            color: white;
+            text-decoration: none;
+        }
+
+        #sidebar a:hover {
+            color: #ff4757;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<!-- ☰ MENU BUTTON -->
+<div id="menuBtn">☰</div>
+
+<!-- 🎮 SIDEBAR -->
+<div id="sidebar">
+    <h2>Menu</h2>
+    <a href="/minigames">🎮 Minigames</a>
+    <a href="/classify">🎭 Classifier</a>
+    <a href="/debug" target="_blank">⚙️ Debug</a>
+</div>
+
+<!-- 🎬 VIDEO -->
+<video autoplay muted loop id="bg-video">
+    <source src="{{ url_for('static', filename='forBG.mp4') }}" type="video/mp4">
+</video>
+
+<div class="overlay">
+    <h1>🎌 AniGen</h1>
+    <p>Find anime recommendations instantly</p>
+
+    <div class="search-container">
+
+        <p style="opacity:0.7;">Search by Anime</p>
+
+        <form action="/recommend" method="POST" class="search-box">
+            <input type="text" name="anime_name" placeholder="Enter anime name..." required>
+            <button type="submit">Search</button>
+        </form>
+
+        <ul id="suggestions"></ul>
+
+        <p style="opacity:0.7; margin-top:10px;">Search by Genre</p>
+
+        <form action="/recommend_by_genre" method="POST" class="search-box">
+            <input type="text" name="genre" placeholder="Enter genre (e.g. action)">
+            <button type="submit">Genre</button>
+        </form>
+
+    </div>
+</div>
+
+<script>
+const input = document.querySelector("input[name='anime_name']");
+const suggestions = document.getElementById("suggestions");
+
+// AUTOCOMPLETE
+input.addEventListener("input", async () => {
+    const query = input.value;
+
+    if (!query) {
+        suggestions.innerHTML = "";
+        return;
+    }
+
+    const res = await fetch(`/search?q=${query}`);
+    const data = await res.json();
+
+    suggestions.innerHTML = "";
+
+    data.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+
+        li.onclick = () => {
+            input.value = item;
+            suggestions.innerHTML = "";
+        };
+
+        suggestions.appendChild(li);
+    });
+});
+
+// SIDEBAR TOGGLE
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
+
+menuBtn.addEventListener("click", () => {
+    sidebar.style.left = sidebar.style.left === "0px" ? "-250px" : "0px";
+});
+
+// SMOOTH TRANSITION
+document.querySelectorAll("form").forEach(form => {
+    form.addEventListener("submit", () => {
+        document.body.style.opacity = "0";
+        document.body.style.transition = "0.5s";
+    });
+});
+
+// FIX BACK BUTTON FREEZE
+window.addEventListener("pageshow", function () {
+    document.body.style.opacity = "1";
+});
+</script>
+
+</body>
+</html>
